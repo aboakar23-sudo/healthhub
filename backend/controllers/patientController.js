@@ -261,38 +261,19 @@ exports.bookAppointmentV2 = async (req, res) => {
             });
         }
         
-        // جلب اسم المريض للإشعار
-        const [patientRows] = await db.query('SELECT name FROM patients WHERE id = ?', [patient_id]);
-        const patientName = patientRows.length ? patientRows[0].name : 'مريض';
-
-        let appointmentId;
         try {
             const [result] = await db.query(
                 'INSERT INTO appointments (patient_id, doctor_id, appointment_time, status, visit_type) VALUES (?, ?, ?, "pending", ?)',
                 [patient_id, doctor_id, appointment_time, visit_type || 'كشف']
             );
-            appointmentId = result.insertId;
+            return res.json({ success: true, appointment_id: result.insertId, message: "Appointment Booked: Pending" });
         } catch (colErr) {
             const [result] = await db.query(
                 'INSERT INTO appointments (patient_id, doctor_id, appointment_time, status) VALUES (?, ?, ?, "pending")',
                 [patient_id, doctor_id, appointment_time]
             );
-            appointmentId = result.insertId;
+            return res.json({ success: true, appointment_id: result.insertId, message: "Appointment Booked: Pending" });
         }
-
-        // إرسال إشعار للدكتور بالحجز الجديد
-        try {
-            const visitLabel = visit_type === 'متابعة' ? '🔄 متابعة' : '📅 كشف جديد';
-            const notifMsg = `${visitLabel}: قام ${patientName} بحجز موعد معك`;
-            await db.query(
-                `INSERT INTO notifications (patient_id, doctor_id, appointment_id, message, type) VALUES (?, ?, ?, ?, 'حجز جديد')`,
-                [patient_id, doctor_id, appointmentId, notifMsg]
-            );
-        } catch (notifErr) {
-            console.warn('تعذر إرسال إشعار الدكتور:', notifErr.message);
-        }
-
-        return res.json({ success: true, appointment_id: appointmentId, message: "Appointment Booked: Pending" });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
