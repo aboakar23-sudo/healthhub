@@ -7,7 +7,7 @@ app.use(cors({ origin: '*', methods: ['GET','POST','PUT','DELETE'], allowedHeade
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-const frontendPath = path.join(__dirname, '..', 'frontend');
+const frontendPath = __dirname;
 app.use(express.static(frontendPath));
 
 const authRoutes = require('./routes/authRoutes');
