@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function fetchBookingStatus() {
     try {
-        const res = await fetch('https://healthhub-production-0c2b.up.railway.app/doctor/booking-status');
+        const res = await fetch('http://localhost:3000/doctor/booking-status');
         if (res.ok) bookingStatus = await res.json();
     } catch (err) {
         console.warn("تعذر جلب حالة الحجز:", err);
@@ -31,7 +31,7 @@ async function fetchBookingStatus() {
 async function fetchDoctors() {
     const container = document.getElementById('doctors-cards');
     // استخدام عنوان IP المحلي لضمان الوصول للسيرفر من المتصفح
-    const API_URL = 'https://healthhub-production-0c2b.up.railway.app/doctor/doctors';
+    const API_URL = 'http://127.0.0.1:3000/doctor/doctors';
     
     try {
         const response = await fetch(API_URL);
@@ -80,7 +80,7 @@ async function fetchDoctors() {
 async function updateDoctorPhotoForPatients() {
     try {
         // جلب الأطباء المحدثة من السيرفر
-        const response = await fetch('https://healthhub-production-0c2b.up.railway.app/doctor/doctors');
+        const response = await fetch('http://127.0.0.1:3000/doctor/doctors');
         if (!response.ok) return;
         
         const data = await response.json();
@@ -138,7 +138,7 @@ function loadUserData() {
 
     // 2) جلب من السيرفر في الخلفية (لو شغال)
     if (patientId) {
-        fetch(`https://healthhub-production-0c2b.up.railway.app/patient/profile/${patientId}`)
+        fetch(`http://localhost:3000/patient/profile/${patientId}`)
             .then(res => res.ok ? res.json() : null)
             .then(data => {
                 if (!data) return;
@@ -186,7 +186,7 @@ function handleImageUpload(event) {
         // رفع للسيرفر
         if (patientId) {
             try {
-                const resp = await fetch('https://healthhub-production-0c2b.up.railway.app/patient/upload-pic', {
+                const resp = await fetch('http://localhost:3000/patient/upload-pic', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ patient_id: parseInt(patientId), profile_pic: base64Image })
@@ -278,7 +278,7 @@ async function saveProfileData() {
     const patientId = localStorage.getItem('userId');
     if (patientId) {
         try {
-            const response = await fetch('https://healthhub-production-0c2b.up.railway.app/patient/update-profile', {
+            const response = await fetch('http://localhost:3000/patient/update-profile', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -396,7 +396,7 @@ async function checkAndBook(docId, btn) {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحقق...';
 
     try {
-        const res = await fetch('https://healthhub-production-0c2b.up.railway.app/doctor/booking-status');
+        const res = await fetch('http://localhost:3000/doctor/booking-status');
         if (res.ok) {
             const status = await res.json();
             bookingStatus = status;
@@ -524,7 +524,7 @@ async function updateAvailableSlots() {
     
     try {
         // جلب المواعيد المحجوزة للطبيب في هذا التاريخ
-        const response = await fetch(`https://healthhub-production-0c2b.up.railway.app/patient/booked-slots/${selectedDoctor.id}/${selectedDate}`);
+        const response = await fetch(`http://localhost:3000/patient/booked-slots/${selectedDoctor.id}/${selectedDate}`);
         const bookedSlots = response.ok ? await response.json() : [];
         
         // تحديث حالة كل خيار
@@ -572,7 +572,7 @@ async function confirmBooking() {
 
     // --- التحقق من حالة الحجوزات والجدول الأسبوعي ---
     try {
-        const statusRes = await fetch('https://healthhub-production-0c2b.up.railway.app/doctor/booking-status');
+        const statusRes = await fetch('http://localhost:3000/doctor/booking-status');
         if (statusRes.ok) {
             const settings = await statusRes.json();
 
@@ -596,7 +596,7 @@ async function confirmBooking() {
     }
 
     try {
-        const response = await fetch('https://healthhub-production-0c2b.up.railway.app/patient/book-v2', {
+        const response = await fetch('http://localhost:3000/patient/book-v2', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -636,7 +636,7 @@ async function confirmBooking() {
             const labNotes = document.getElementById('lab-notes-input')?.value.trim();
             if (labName && (modalLabBase64 || labText)) {
                 try {
-                    await fetch('https://healthhub-production-0c2b.up.railway.app/patient/upload-lab', {
+                    await fetch('http://localhost:3000/patient/upload-lab', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -721,7 +721,7 @@ async function loadPrescriptions() {
         </div>`;
 
     try {
-        const response = await fetch(`https://healthhub-production-0c2b.up.railway.app/doctor/prescriptions?patient_id=${patientId}`);
+        const response = await fetch(`http://localhost:3000/doctor/prescriptions?patient_id=${patientId}`);
         if (!response.ok) throw new Error('فشل الاتصال');
         const data = await response.json();
 
@@ -823,7 +823,7 @@ async function archivePrescription(id) {
     if (!confirm('هل تريد أرشفة هذه الروشتة؟ ستختفي من القائمة الرئيسية.')) return;
 
     try {
-        const res = await fetch('https://healthhub-production-0c2b.up.railway.app/patient/prescriptions/read', {
+        const res = await fetch('http://localhost:3000/patient/prescriptions/read', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ prescription_id: id, patient_id: parseInt(patientId) })
@@ -853,7 +853,7 @@ async function archivePrescription(id) {
 async function markPrescriptionRead(id) {
     const patientId = localStorage.getItem('userId');
     try {
-        await fetch('https://healthhub-production-0c2b.up.railway.app/patient/prescriptions/read', {
+        await fetch('http://localhost:3000/patient/prescriptions/read', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ prescription_id: id, patient_id: parseInt(patientId) })
@@ -890,7 +890,7 @@ async function loadAppointments() {
 
     try {
         // نجيب المواعيد من DB مباشرة عشان تكون متزامنة دايماً (حتى لو الدكتور حذف موعد)
-        const response = await fetch(`https://healthhub-production-0c2b.up.railway.app/patient/appointments/${patientId}`);
+        const response = await fetch(`http://localhost:3000/patient/appointments/${patientId}`);
         const appointments = await response.json();
 
         // نحدث localStorage بالبيانات الحديثة من DB
@@ -951,7 +951,7 @@ async function loadNotifications(patientId) {
     if (!section || !unreadList || !readList) return;
 
     try {
-        const res = await fetch(`https://healthhub-production-0c2b.up.railway.app/patient/notifications/${patientId}`);
+        const res = await fetch(`http://localhost:3000/patient/notifications/${patientId}`);
         const notifications = await res.json();
 
         if (!Array.isArray(notifications) || notifications.length === 0) {
@@ -1034,7 +1034,7 @@ async function markNotifRead(notifId, el) {
     const patientId = localStorage.getItem('userId');
     if (!patientId) return;
     try {
-        await fetch('https://healthhub-production-0c2b.up.railway.app/patient/notifications/read', {
+        await fetch('http://localhost:3000/patient/notifications/read', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ notification_id: notifId, patient_id: parseInt(patientId) })
@@ -1050,7 +1050,7 @@ async function cancelApp(appointmentId) {
     if (!patientId) return alert("يرجى تسجيل الدخول أولاً");
 
     try {
-        const response = await fetch(`https://healthhub-production-0c2b.up.railway.app/patient/cancel/${appointmentId}`, {
+        const response = await fetch(`http://localhost:3000/patient/cancel/${appointmentId}`, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ patient_id: patientId })
@@ -1090,7 +1090,7 @@ async function rateDoctor(doctorId, prescriptionId, stars) {
     if (!patientId) return alert("يرجى تسجيل الدخول أولاً");
 
     try {
-        const response = await fetch('https://healthhub-production-0c2b.up.railway.app/doctor/rate', {
+        const response = await fetch('http://localhost:3000/doctor/rate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1169,7 +1169,7 @@ async function patientChangePassword() {
     }
 
     try {
-        const res = await fetch('https://healthhub-production-0c2b.up.railway.app/patient/change-password', {
+        const res = await fetch('http://localhost:3000/patient/change-password', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ patient_id: parseInt(patientId), old_password: oldPass, new_password: newPass })
@@ -1282,7 +1282,7 @@ async function sendLabResult() {
     const labContent = healthLabBase64 || labText;
 
     try {
-        const res = await fetch('https://healthhub-production-0c2b.up.railway.app/patient/upload-lab', {
+        const res = await fetch('http://localhost:3000/patient/upload-lab', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1321,7 +1321,7 @@ async function fillLabDoctorSelect() {
     const select = document.getElementById('lab-doctor-select');
     if (!select) return;
     try {
-        const res = await fetch('https://healthhub-production-0c2b.up.railway.app/doctor/doctors');
+        const res = await fetch('http://localhost:3000/doctor/doctors');
         const data = await res.json();
         if (!Array.isArray(data)) return;
         data.forEach(d => {
@@ -1343,7 +1343,7 @@ async function loadDoctorsInfoTab() {
     container.innerHTML = '<div style="text-align:center;padding:40px;color:#bdc3c7;"><i class="fas fa-spinner fa-spin fa-2x"></i><p>جاري التحميل...</p></div>';
 
     try {
-        const res = await fetch('https://healthhub-production-0c2b.up.railway.app/doctor/doctors');
+        const res = await fetch('http://localhost:3000/doctor/doctors');
         const doctorsData = await res.json();
 
         if (!Array.isArray(doctorsData) || doctorsData.length === 0) {
@@ -1400,7 +1400,7 @@ async function toggleDoctorInfo(docId) {
     panel.innerHTML = '<div style="text-align:center;color:#bbb;"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>';
 
     try {
-        const res = await fetch(`https://healthhub-production-0c2b.up.railway.app/doctor/info?doctor_id=${docId}`);
+        const res = await fetch(`http://localhost:3000/doctor/info?doctor_id=${docId}`);
         const info = await res.json();
 
         let html = '<div style="display:flex;flex-direction:column;gap:10px;">';
@@ -1478,7 +1478,7 @@ async function loadPatientLabResults() {
     container.innerHTML = '<div style="text-align:center;padding:20px;color:#bdc3c7;"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>';
 
     try {
-        const res = await fetch(`https://healthhub-production-0c2b.up.railway.app/patient/lab-results/${patientId}`);
+        const res = await fetch(`http://localhost:3000/patient/lab-results/${patientId}`);
         if (!res.ok) throw new Error('فشل');
         const labs = await res.json();
 
@@ -1693,7 +1693,7 @@ async function showDoctorInfoPopup(docId) {
     // جلب معلومات الدكتور
     const body = document.getElementById('doc-info-popup-body');
     try {
-        const res = await fetch(`https://healthhub-production-0c2b.up.railway.app/doctor/info?doctor_id=${docId}`);
+        const res = await fetch(`http://localhost:3000/doctor/info?doctor_id=${docId}`);
         const info = res.ok ? await res.json() : {};
 
         let html = '<div style="display:flex;flex-direction:column;gap:14px;">';
@@ -1771,7 +1771,7 @@ async function archiveLab(labId) {
     if (!confirm('هل تريد أرشفة هذا التحليل؟ سيختفي من القائمة الرئيسية.')) return;
 
     try {
-        const res = await fetch('https://healthhub-production-0c2b.up.railway.app/patient/lab-results/read', {
+        const res = await fetch('http://localhost:3000/patient/lab-results/read', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ lab_id: labId, patient_id: parseInt(patientId) })
