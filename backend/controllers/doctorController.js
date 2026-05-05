@@ -71,8 +71,18 @@ exports.addDoctorAppointment = async (req, res) => {
 };
 
 exports.getAppointments = async (req, res) => {
+    const { doctorId } = req.query;
+    if (!doctorId) return res.status(400).json({ success: false, message: "doctorId مطلوب" });
     try {
-        const [rows] = await db.query('SELECT * FROM appointments');
+        const [rows] = await db.query(
+            `SELECT a.id, a.appointment_time, a.status, a.visit_type, a.type,
+                    p.id as patient_id, p.name as patient_name, p.phone as patient_phone
+             FROM appointments a
+             JOIN patients p ON a.patient_id = p.id
+             WHERE a.doctor_id = ?
+             ORDER BY a.appointment_time ASC`,
+            [parseInt(doctorId)]
+        );
         res.json(rows);
     } catch (err) {
         res.status(500).send(err.message);
