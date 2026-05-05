@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const doctorCtrl = require('../controllers/doctorController');
+const db = require('../config/db');
 
 router.get('/appointments', doctorCtrl.getAppointments);
 router.get('/doctors', doctorCtrl.getAllDoctors);
@@ -38,18 +39,41 @@ router.get('/lab-results', doctorCtrl.getDoctorLabResults);
 router.post('/lab-read', doctorCtrl.markLabRead);
 router.post('/lab-reply', doctorCtrl.replyToLab);
 
-// حالة الحجوزات (مفتوح/مغلق) - يُخزن في ذاكرة السيرفر
-let bookingSettings = { bookingOpen: true, weeklySchedule: {} };
-
-router.get('/booking-status', (req, res) => {
-    res.json(bookingSettings);
+// حالة الحجوزات (مفتوح/مغلق) - مخزنة في الداتابيز مش في الذاكرة
+router.get('/booking-status', async (req, res) => {
+    const { doctorId } = req.query;
+    if (!doctorId) return res.status(400).json({ success: false, message: "doctorId مطلوب" });
+    try {
+        const [rows] = await db.query(
+            'SELECT booking_open, weekly_schedule FROM doctor_booking_settings WHERE doctor_id = ?',
+            [parseInt(doctorId)]
+        );
+        if (rows.length === 0) return res.json({ bookingOpen: true, weeklySchedule: {} });
+        res.json({
+            bookingOpen: rows[0].booking_open === 1,
+            weeklySchedule: JSON.parse(rows[0].weekly_schedule || '{}')
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
 });
 
-router.post('/booking-status', (req, res) => {
-    const { bookingOpen, weeklySchedule } = req.body;
-    if (typeof bookingOpen !== 'undefined') bookingSettings.bookingOpen = bookingOpen;
-    if (weeklySchedule) bookingSettings.weeklySchedule = weeklySchedule;
-    res.json({ success: true, ...bookingSettings });
+router.post('/booking-status', async (req, res) => {
+    const { doctorId, bookingOpen, weeklySchedule } = req.body;
+    if (!doctorId) return res.status(400).json({ success: false, message: "doctorId مطلوب" });
+    try {
+        await db.query(
+            `INSERT INTO doctor_booking_settings (doctor_id, booking_open, weekly_schedule)
+             VALUES (?, ?, ?)
+             ON DUPLICATE KEY UPDATE
+             booking_open = VALUES(booking_open),
+             weekly_schedule = VALUES(weekly_schedule)`,
+            [parseInt(doctorId), bookingOpen ? 1 : 0, JSON.stringify(weeklySchedule || {})]
+        );
+        res.json({ success: true, bookingOpen, weeklySchedule });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
 });
 
 module.exports = router;
