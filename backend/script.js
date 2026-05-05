@@ -266,7 +266,7 @@ async function saveWeeklySchedule() {
         await fetch('https://healthhub-production-0c2b.up.railway.app/doctor/booking-status', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ weeklySchedule: schedule })
+            body: JSON.stringify({ doctorId: parseInt(localStorage.getItem('currentDoctorId')), weeklySchedule: schedule })
         });
     } catch (err) {
         console.warn("تعذر مزامنة الجدول مع السيرفر:", err);
@@ -286,7 +286,7 @@ async function toggleBookingStatus() {
         await fetch('https://healthhub-production-0c2b.up.railway.app/doctor/booking-status', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ bookingOpen })
+            body: JSON.stringify({ doctorId: parseInt(localStorage.getItem('currentDoctorId')), bookingOpen })
         });
     } catch (err) {
         console.warn("تعذر مزامنة حالة الحجز مع السيرفر:", err);
@@ -1054,12 +1054,30 @@ async function showDashboard(name) {
     document.getElementById('doc-dashboard-section')?.classList.remove('hidden');
     loadDoctorPhoto();
     await fetchDoctorPatients();
+    await loadBookingStatus();
     setTimeout(loadUnreadLabCount, 500);
 }
 
 // ==========================================
 // --- صورة الدكتور في لوحة العيادة ---
 // ==========================================
+async function loadBookingStatus() {
+    const doctorId = localStorage.getItem('currentDoctorId');
+    if (!doctorId) return;
+    try {
+        const res = await fetch(`https://healthhub-production-0c2b.up.railway.app/doctor/booking-status?doctorId=${doctorId}`);
+        const data = await res.json();
+        bookingOpen = data.bookingOpen !== false;
+        const btn = document.getElementById('toggle-booking-btn');
+        const text = document.getElementById('booking-text');
+        if (btn) btn.textContent = bookingOpen ? "إيقاف الحجوزات" : "فتح الحجوزات";
+        if (btn) btn.className = bookingOpen ? "btn btn-orange" : "btn btn-green";
+        if (text) text.innerHTML = `حالة الحجز الآن: ${bookingOpen ? "🟢 مفتوح" : "🔴 مغلق"}`;
+    } catch (err) {
+        console.warn("تعذر جلب حالة الحجز:", err);
+    }
+}
+
 async function loadDoctorPhoto() {
     const doctorId = localStorage.getItem('currentDoctorId');
     if (!doctorId) return;
