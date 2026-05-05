@@ -52,8 +52,4 @@ router.post('/booking-status', (req, res) => {
     res.json({ success: true, ...bookingSettings });
 });
 
-// إشعارات الدكتور (الحجوزات الجديدة)
-router.get('/notifications', doctorCtrl.getDoctorNotifications);
-router.post('/notifications/read', doctorCtrl.markDoctorNotificationRead);
-
 module.exports = router;
