@@ -71,19 +71,8 @@ exports.addDoctorAppointment = async (req, res) => {
 };
 
 exports.getAppointments = async (req, res) => {
-    const { doctor_id } = req.query;
-    if (!doctor_id) return res.status(400).json({ success: false, message: "doctor_id مطلوب" });
     try {
-        const [rows] = await db.query(
-            `SELECT a.id, a.appointment_time, a.status, a.visit_type, a.type,
-                    p.id as patient_id, p.name as patient_name, p.phone as patient_phone,
-                    p.age, p.blood_type, p.diseases, p.profile_pic as patient_pic
-             FROM appointments a
-             JOIN patients p ON a.patient_id = p.id
-             WHERE a.doctor_id = ?
-             ORDER BY a.appointment_time DESC`,
-            [parseInt(doctor_id)]
-        );
+        const [rows] = await db.query('SELECT * FROM appointments');
         res.json(rows);
     } catch (err) {
         res.status(500).send(err.message);
@@ -415,44 +404,6 @@ exports.updateAppointmentStatus = async (req, res) => {
     try {
         await db.query('UPDATE appointments SET status = ? WHERE id = ?', [status, appointmentId]);
         res.json({ success: true, message: "تم تحديث حالة الموعد بنجاح" });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
-    }
-};
-
-// جلب إشعارات الدكتور (الحجوزات الجديدة من المرضى)
-exports.getDoctorNotifications = async (req, res) => {
-    const { doctor_id } = req.query;
-    if (!doctor_id) return res.status(400).json({ success: false, message: "doctor_id مطلوب" });
-    try {
-        const [rows] = await db.query(
-            `SELECT n.id, n.message, n.type, n.is_read, n.created_at,
-                    p.name as patient_name, p.profile_pic as patient_pic,
-                    n.appointment_id
-             FROM notifications n
-             JOIN patients p ON n.patient_id = p.id
-             WHERE n.doctor_id = ?
-             ORDER BY n.created_at DESC
-             LIMIT 30`,
-            [parseInt(doctor_id)]
-        );
-        res.json(rows);
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
-    }
-};
-
-// تحديد إشعار الدكتور كمقروء
-exports.markDoctorNotificationRead = async (req, res) => {
-    const { notification_id, doctor_id } = req.body;
-    if (!notification_id || !doctor_id)
-        return res.status(400).json({ success: false, message: "بيانات ناقصة" });
-    try {
-        await db.query(
-            'UPDATE notifications SET is_read = 1 WHERE id = ? AND doctor_id = ?',
-            [notification_id, doctor_id]
-        );
-        res.json({ success: true });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
